@@ -270,6 +270,7 @@ td.muted{color:var(--text2);font-size:12px}
         <th style="width:95px">Recibo</th>
         <th style="width:95px">Romaneio</th>
         <th>Conferente</th>
+        <th style="width:90px">Ações</th>
       </tr></thead>
       <tbody id="mov-body"></tbody>
     </table>
@@ -409,6 +410,52 @@ td.muted{color:var(--text2);font-size:12px}
 
 </div><!-- /main -->
 </div><!-- /layout -->
+
+<!-- MODAL EDITAR LANÇAMENTO -->
+<div class="overlay" id="modal-editar">
+<div class="modal">
+  <h2>Editar lançamento</h2>
+  <input type="hidden" id="el-id">
+  <div class="fr-2">
+    <div class="fr"><label>Data *</label><input type="date" id="el-data"></div>
+    <div class="fr"><label>Fornecedor *</label><select id="el-forn"></select></div>
+  </div>
+  <div class="fr-2">
+    <div class="fr"><label>Item *</label>
+      <select id="el-item">
+        <option>PALETE PBR</option>
+        <option>PALETE DESCARTÁVEL</option>
+        <option>GAIOLA MADEIRA</option>
+        <option>PALETE CHEP</option>
+        <option>PALETE EURO CHEP</option>
+        <option>PALETE EURO</option>
+      </select>
+    </div>
+    <div class="fr"><label>Natureza *</label>
+      <select id="el-nat">
+        <option>EXPEDIÇÃO</option>
+        <option>RECEBIMENTO</option>
+        <option>RETORNO</option>
+      </select>
+    </div>
+  </div>
+  <div class="fr"><label>Quantidade *</label><input type="number" id="el-qtde" min="1" placeholder="0"></div>
+  <div class="fsep">Documentos</div>
+  <div class="fr-2">
+    <div class="fr"><label>Nº Vale Palete</label><input type="text" id="el-vp"></div>
+    <div class="fr"><label>Nº Recibo</label><input type="text" id="el-recibo"></div>
+  </div>
+  <div class="fr-2">
+    <div class="fr"><label>Nº Romaneio</label><input type="text" id="el-rom"></div>
+    <div class="fr"><label>Conferente</label><input type="text" id="el-conf"></div>
+  </div>
+  <div class="msg" id="el-msg"></div>
+  <div class="mact">
+    <button class="btn" onclick="fechar('editar')">Cancelar</button>
+    <button class="btn btn-p" id="el-btn" onclick="salvarEdicao()">Salvar alterações</button>
+  </div>
+</div>
+</div>
 
 <!-- MODAL NOVA COMPRA -->
 <div class="overlay" id="modal-compra">
@@ -858,7 +905,7 @@ function popSels(){
     el.innerHTML='<option value="">Todos</option>'+ns.map(function(n){return'<option>'+n+'</option>';}).join('');
     el.value=v;
   });
-  ['nl-forn','mc-forn','mn-forn'].forEach(function(id){
+  ['nl-forn','mc-forn','mn-forn','el-forn'].forEach(function(id){
     var el=document.getElementById(id);if(!el)return;
     el.innerHTML=ns.map(function(n){return'<option>'+n+'</option>';}).join('');
   });
@@ -962,13 +1009,17 @@ function rMov(){
   document.getElementById('mov-body').innerHTML=data.slice(0,500).map(function(r){
     var bcls=r.nat==='EXPEDIÇÃO'?'b-exp':r.nat==='RECEBIMENTO'?'b-rec':r.nat==='RETORNO'?'b-ret':'b-comp';
     var blbl=r.nat==='EXPEDIÇÃO'?'Expedição':r.nat==='RECEBIMENTO'?'Recebimento':r.nat==='RETORNO'?'Retorno':'Compra';
+    var id=r._id||'';
+    var edBtn=id?'<button onclick="editarLanc(\''+id+'\')" title="Editar" style="padding:3px 7px;font-size:11px;background:var(--accent-bg);border:0.5px solid var(--accent);border-radius:4px;cursor:pointer;color:var(--accent-text);margin-right:3px">✏️</button>':'';
+    var delBtn=id?'<button onclick="excluirLanc(\''+id+'\')" title="Excluir" style="padding:3px 7px;font-size:11px;background:var(--danger-bg);border:0.5px solid var(--danger);border-radius:4px;cursor:pointer;color:var(--danger)">🗑</button>':'';
     return '<tr><td>'+r.data+'</td><td>'+r.forn+'</td><td>'+r.item+'</td>'+
       '<td><span class="badge '+bcls+'">'+blbl+'</span></td>'+
       '<td class="num">'+r.qtde.toLocaleString('pt-BR')+'</td>'+
       '<td class="muted">'+(r.vp||'-')+'</td>'+
       '<td class="muted">'+(r.recibo||'-')+'</td>'+
       '<td class="muted">'+(r.rom||'-')+'</td>'+
-      '<td class="muted">'+(r.conf||'-')+'</td></tr>';
+      '<td class="muted">'+(r.conf||'-')+'</td>'+
+      '<td style="white-space:nowrap">'+edBtn+delBtn+'</td></tr>';
   }).join('');
 }
 
@@ -1233,6 +1284,72 @@ async function salvarForn(){
   fornecedores.push(novo);
   popSels();
   setTimeout(function(){fechar('forn');rFornecs();msg.textContent='';},1200);
+}
+
+// =========================================================
+// EDITAR LANÇAMENTO
+// =========================================================
+function editarLanc(id){
+  var r=lancamentos.find(function(x){return x._id===id;});
+  if(!r){alert('Registro não encontrado.');return;}
+  // Preenche modal
+  var p=r.data.split('/');
+  document.getElementById('el-id').value=id;
+  document.getElementById('el-data').value=p[2]+'-'+p[1]+'-'+p[0];
+  document.getElementById('el-forn').value=r.forn;
+  document.getElementById('el-item').value=r.item;
+  document.getElementById('el-nat').value=r.nat;
+  document.getElementById('el-qtde').value=r.qtde;
+  document.getElementById('el-vp').value=r.vp||'';
+  document.getElementById('el-recibo').value=r.recibo||'';
+  document.getElementById('el-rom').value=r.rom||'';
+  document.getElementById('el-conf').value=r.conf||'';
+  document.getElementById('el-msg').textContent='';
+  document.getElementById('modal-editar').classList.add('on');
+}
+
+async function salvarEdicao(){
+  var id=document.getElementById('el-id').value;
+  var dt=document.getElementById('el-data').value;
+  var fn=document.getElementById('el-forn').value;
+  var it=document.getElementById('el-item').value;
+  var na=document.getElementById('el-nat').value;
+  var qt=parseInt(document.getElementById('el-qtde').value)||0;
+  var vp=document.getElementById('el-vp').value.trim();
+  var rb=document.getElementById('el-recibo').value.trim();
+  var rm=document.getElementById('el-rom').value.trim();
+  var cf=document.getElementById('el-conf').value.trim();
+  var msg=document.getElementById('el-msg');
+  var btn=document.getElementById('el-btn');
+  if(!dt||!fn||qt<=0){msg.className='msg err';msg.textContent='Preencha data, fornecedor e quantidade.';return;}
+  var p=dt.split('-');
+  var dataFmt=p[2]+'/'+p[1]+'/'+p[0];
+  var reg={data:dataFmt,forn:fn,item:it,nat:na,qtde:qt,vp:vp,recibo:rb,rom:rm,conf:cf,ts:Date.now()};
+  btn.disabled=true;btn.textContent='Salvando...';
+  try{
+    await db.ref('lancamentos/'+id).set(reg);
+    var idx=lancamentos.findIndex(function(x){return x._id===id;});
+    if(idx>=0){reg._id=id;lancamentos[idx]=reg;}
+    msg.className='msg ok';msg.textContent='Atualizado no Firebase!';
+    setTimeout(function(){fechar('editar');popSels();rDash();rMov();rFin();msg.textContent='';},1200);
+  }catch(e){
+    msg.className='msg err';msg.textContent='Erro ao salvar: '+e.message;
+  }
+  btn.disabled=false;btn.textContent='Salvar alterações';
+}
+
+async function excluirLanc(id){
+  var r=lancamentos.find(function(x){return x._id===id;});
+  if(!r){alert('Registro não encontrado.');return;}
+  var confirmMsg='Excluir este lançamento?\n\n'+r.data+' | '+r.forn+' | '+r.item+' | '+r.nat+' | '+r.qtde+' un';
+  if(!confirm(confirmMsg))return;
+  try{
+    await db.ref('lancamentos/'+id).remove();
+    lancamentos=lancamentos.filter(function(x){return x._id!==id;});
+    popSels();rDash();rMov();rFin();
+  }catch(e){
+    alert('Erro ao excluir: '+e.message);
+  }
 }
 
 document.addEventListener('DOMContentLoaded',function(){carregar();});
