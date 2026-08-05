@@ -345,12 +345,14 @@ td.muted{color:var(--text2);font-size:12px}
       <thead><tr>
         <th style="width:88px">Data</th>
         <th style="width:120px">Fornecedor</th>
+        <th style="width:80px">Tipo</th>
         <th style="width:160px">Item</th>
         <th style="width:65px;text-align:right">Qtde</th>
         <th style="width:100px;text-align:right">Vlr Unit.</th>
         <th style="width:110px;text-align:right">Total</th>
         <th style="width:120px">Nota Fiscal</th>
         <th>Observação</th>
+        <th style="width:90px">Ações</th>
       </tr></thead>
       <tbody id="comp-body"></tbody>
     </table>
@@ -465,6 +467,12 @@ td.muted{color:var(--text2);font-size:12px}
     <div class="fr"><label>Data *</label><input type="date" id="mc-data"></div>
     <div class="fr"><label>Fornecedor *</label><select id="mc-forn"></select></div>
   </div>
+  <div class="fr"><label>Tipo *</label>
+    <select id="mc-tipo">
+      <option value="COMPRA">Compra</option>
+      <option value="REFORMA">Reforma</option>
+    </select>
+  </div>
   <div class="fr-2">
     <div class="fr"><label>Item *</label>
       <select id="mc-item">
@@ -487,6 +495,47 @@ td.muted{color:var(--text2);font-size:12px}
   <div class="mact">
     <button class="btn" onclick="fechar('compra')">Cancelar</button>
     <button class="btn btn-p" onclick="salvarCompra()">Salvar</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL EDITAR COMPRA -->
+<div class="overlay" id="modal-editar-compra">
+<div class="modal">
+  <h2>Editar compra / reforma</h2>
+  <input type="hidden" id="ec-id">
+  <div class="fr-2">
+    <div class="fr"><label>Data *</label><input type="date" id="ec-data"></div>
+    <div class="fr"><label>Fornecedor *</label><select id="ec-forn"></select></div>
+  </div>
+  <div class="fr"><label>Tipo *</label>
+    <select id="ec-tipo">
+      <option value="COMPRA">Compra</option>
+      <option value="REFORMA">Reforma</option>
+    </select>
+  </div>
+  <div class="fr-2">
+    <div class="fr"><label>Item *</label>
+      <select id="ec-item">
+        <option>PALETE PBR</option>
+        <option>PALETE DESCARTÁVEL</option>
+        <option>GAIOLA MADEIRA</option>
+        <option>PALETE CHEP</option>
+        <option>PALETE EURO CHEP</option>
+        <option>PALETE EURO</option>
+      </select>
+    </div>
+    <div class="fr"><label>Quantidade *</label><input type="number" id="ec-qtde" min="1" placeholder="0"></div>
+  </div>
+  <div class="fr-2">
+    <div class="fr"><label>Valor unitário (R$) *</label><input type="number" id="ec-vunit" step="0.01" placeholder="0,00"></div>
+    <div class="fr"><label>Nº Nota Fiscal</label><input type="text" id="ec-nf"></div>
+  </div>
+  <div class="fr"><label>Observação</label><input type="text" id="ec-obs" placeholder="Opcional"></div>
+  <div class="msg" id="ec-msg"></div>
+  <div class="mact">
+    <button class="btn" onclick="fecharCompraEdit()">Cancelar</button>
+    <button class="btn btn-p" id="ec-btn" onclick="salvarEdicaoCompra()">Salvar alterações</button>
   </div>
 </div>
 </div>
@@ -1079,12 +1128,20 @@ function rCompras(){
   document.getElementById('comp-body').innerHTML=data.length===0
     ?'<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text2)">Nenhuma compra registrada</td></tr>'
     :data.map(function(r){
-      return '<tr><td>'+r.data+'</td><td>'+r.forn+'</td><td>'+r.item+'</td>'+
+      var id=r._id||'';
+      var tcls=r.tipo==='REFORMA'?'b-ret':'b-comp';
+      var tlbl=r.tipo==='REFORMA'?'Reforma':'Compra';
+      var edBtn=id?'<button onclick="editarCompra(\''+id+'\')" title="Editar" style="padding:3px 7px;font-size:11px;background:var(--accent-bg);border:0.5px solid var(--accent);border-radius:4px;cursor:pointer;color:var(--accent-text);margin-right:3px">✏️</button>':'';
+      var delBtn=id?'<button onclick="excluirCompra(\''+id+'\')" title="Excluir" style="padding:3px 7px;font-size:11px;background:var(--danger-bg);border:0.5px solid var(--danger);border-radius:4px;cursor:pointer;color:var(--danger)">🗑</button>':'';
+      return '<tr><td>'+r.data+'</td><td>'+r.forn+'</td>'+
+        '<td><span class="badge '+tcls+'">'+tlbl+'</span></td>'+
+        '<td>'+r.item+'</td>'+
         '<td class="num">'+r.qtde.toLocaleString('pt-BR')+'</td>'+
         '<td class="num">'+brl(r.vunit)+'</td>'+
         '<td class="num">'+brl(r.qtde*r.vunit)+'</td>'+
         '<td class="muted">'+(r.nf||'-')+'</td>'+
-        '<td class="muted">'+(r.obs||'-')+'</td></tr>';
+        '<td class="muted">'+(r.obs||'-')+'</td>'+
+        '<td style="white-space:nowrap">'+edBtn+delBtn+'</td></tr>';
     }).join('');
 }
 
@@ -1094,12 +1151,13 @@ async function salvarCompra(){
   var it=document.getElementById('mc-item').value;
   var qt=parseInt(document.getElementById('mc-qtde').value)||0;
   var vu=parseFloat(document.getElementById('mc-vunit').value)||0;
+  var tp=document.getElementById('mc-tipo').value;
   var nf=document.getElementById('mc-nf').value.trim();
   var ob=document.getElementById('mc-obs').value.trim();
   var msg=document.getElementById('mc-msg');
   if(!dt||!fn||qt<=0||vu<=0){msg.className='msg err';msg.textContent='Preencha todos os campos obrigatórios.';return;}
   var p=dt.split('-');
-  var reg={data:p[2]+'/'+p[1]+'/'+p[0],forn:fn,item:it,qtde:qt,vunit:vu,nf:nf,obs:ob,ts:Date.now()};
+  var reg={data:p[2]+'/'+p[1]+'/'+p[0],forn:fn,tipo:tp,item:it,qtde:qt,vunit:vu,nf:nf,obs:ob,ts:Date.now()};
   try{
     var ref = await db.ref('compras').push(reg);
     reg._id = ref.key;
@@ -1284,6 +1342,74 @@ async function salvarForn(){
   fornecedores.push(novo);
   popSels();
   setTimeout(function(){fechar('forn');rFornecs();msg.textContent='';},1200);
+}
+
+// =========================================================
+// EDITAR / EXCLUIR COMPRA
+// =========================================================
+function fecharCompraEdit(){document.getElementById('modal-editar-compra').classList.remove('on');}
+
+function editarCompra(id){
+  var r=compras.find(function(x){return x._id===id;});
+  if(!r){alert('Registro não encontrado.');return;}
+  var p=r.data.split('/');
+  document.getElementById('ec-id').value=id;
+  document.getElementById('ec-data').value=p[2]+'-'+p[1]+'-'+p[0];
+  document.getElementById('ec-forn').value=r.forn;
+  document.getElementById('ec-tipo').value=r.tipo||'COMPRA';
+  document.getElementById('ec-item').value=r.item;
+  document.getElementById('ec-qtde').value=r.qtde;
+  document.getElementById('ec-vunit').value=r.vunit;
+  document.getElementById('ec-nf').value=r.nf||'';
+  document.getElementById('ec-obs').value=r.obs||'';
+  document.getElementById('ec-msg').textContent='';
+  // popula fornecedores no select
+  var ns=fornecedores.map(function(f){return f.nome;});
+  document.getElementById('ec-forn').innerHTML=ns.map(function(n){return'<option>'+n+'</option>';}).join('');
+  document.getElementById('ec-forn').value=r.forn;
+  document.getElementById('modal-editar-compra').classList.add('on');
+}
+
+async function salvarEdicaoCompra(){
+  var id=document.getElementById('ec-id').value;
+  var dt=document.getElementById('ec-data').value;
+  var fn=document.getElementById('ec-forn').value;
+  var tp=document.getElementById('ec-tipo').value;
+  var it=document.getElementById('ec-item').value;
+  var qt=parseInt(document.getElementById('ec-qtde').value)||0;
+  var vu=parseFloat(document.getElementById('ec-vunit').value)||0;
+  var nf=document.getElementById('ec-nf').value.trim();
+  var ob=document.getElementById('ec-obs').value.trim();
+  var msg=document.getElementById('ec-msg');
+  var btn=document.getElementById('ec-btn');
+  if(!dt||!fn||qt<=0||vu<=0){msg.className='msg err';msg.textContent='Preencha todos os campos obrigatórios.';return;}
+  var p=dt.split('-');
+  var reg={data:p[2]+'/'+p[1]+'/'+p[0],forn:fn,tipo:tp,item:it,qtde:qt,vunit:vu,nf:nf,obs:ob,ts:Date.now()};
+  btn.disabled=true;btn.textContent='Salvando...';
+  try{
+    await db.ref('compras/'+id).set(reg);
+    var idx=compras.findIndex(function(x){return x._id===id;});
+    if(idx>=0){reg._id=id;compras[idx]=reg;}
+    msg.className='msg ok';msg.textContent='Atualizado!';
+    setTimeout(function(){fecharCompraEdit();rCompras();msg.textContent='';},1200);
+  }catch(e){
+    msg.className='msg err';msg.textContent='Erro: '+e.message;
+  }
+  btn.disabled=false;btn.textContent='Salvar alterações';
+}
+
+async function excluirCompra(id){
+  var r=compras.find(function(x){return x._id===id;});
+  if(!r){alert('Registro não encontrado.');return;}
+  var confirmMsg='Excluir este registro?\n\n'+r.data+' | '+r.forn+' | '+(r.tipo||'COMPRA')+' | '+r.item+' | '+r.qtde+' un | '+brl(r.qtde*r.vunit);
+  if(!confirm(confirmMsg))return;
+  try{
+    await db.ref('compras/'+id).remove();
+    compras=compras.filter(function(x){return x._id!==id;});
+    rCompras();rDash();rFin();
+  }catch(e){
+    alert('Erro ao excluir: '+e.message);
+  }
 }
 
 // =========================================================
