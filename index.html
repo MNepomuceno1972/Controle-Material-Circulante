@@ -1789,18 +1789,36 @@ function rVales(){
   var filtItem = document.getElementById('vf-item').value;
   var filtTipo = document.getElementById('vf-tipo').value;
 
-  // --- cards: totais gerais + breakdown por tipo ---
-  var porItem = {}; // {item: {ent:0, sai:0}}
+  // --- cards: sensível ao filtro de fornecedor ---
+  var porItem = {};
   var totalEnt = 0, totalSai = 0;
   ITENS_VALES.forEach(function(it){porItem[it]={ent:0,sai:0};});
-  valesLanc.forEach(function(r){
+
+  var baseCalc = filtForn
+    ? valesLanc.filter(function(r){return r.forn===filtForn;})
+    : valesLanc;
+
+  baseCalc.forEach(function(r){
     if(!porItem[r.item]) porItem[r.item]={ent:0,sai:0};
     if(r.tipo==='ENTRADA'){ porItem[r.item].ent+=r.qtde; totalEnt+=r.qtde; }
     else { porItem[r.item].sai+=r.qtde; totalSai+=r.qtde; }
   });
   var saldoGeral = totalEnt - totalSai;
 
-  // card resumo + card breakdown
+  var cardsHtml = '';
+  if(filtForn){
+    cardsHtml =
+      '<div class="card inf"><div class="lbl">Entradas — '+filtForn+'</div><div class="val">'+totalEnt.toLocaleString('pt-BR')+'</div><div class="sub">vales recebidos deste fornecedor</div></div>'+
+      '<div class="card ok"><div class="lbl">Devolvido — '+filtForn+'</div><div class="val">'+totalSai.toLocaleString('pt-BR')+'</div><div class="sub">paletes já pagos</div></div>'+
+      '<div class="card '+(saldoGeral>0?'bad':'')+'"><div class="lbl">Saldo a devolver</div><div class="val">'+saldoGeral.toLocaleString('pt-BR')+'</div><div class="sub">paletes que o CD ainda deve</div></div>';
+  } else {
+    cardsHtml =
+      '<div class="card inf"><div class="lbl">Total entradas</div><div class="val">'+totalEnt.toLocaleString('pt-BR')+'</div><div class="sub">vales recebidos de fornecedores</div></div>'+
+      '<div class="card ok"><div class="lbl">Total devolvido</div><div class="val">'+totalSai.toLocaleString('pt-BR')+'</div><div class="sub">paletes já pagos</div></div>'+
+      '<div class="card '+(saldoGeral>0?'bad':'')+'"><div class="lbl">Saldo a devolver</div><div class="val">'+saldoGeral.toLocaleString('pt-BR')+'</div><div class="sub">paletes que o CD ainda deve</div></div>'+
+      '<div class="card purple"><div class="lbl">Fornecedores</div><div class="val">'+valesFornecs.length+'</div><div class="sub">cadastrados neste módulo</div></div>';
+  }
+
   var linhasBreakdown = ITENS_VALES.map(function(it){
     var s = (porItem[it]||{ent:0,sai:0});
     var sld = s.ent - s.sai;
@@ -1818,14 +1836,9 @@ function rVales(){
 
   if(!linhasBreakdown) linhasBreakdown = '<div style="font-size:12px;color:var(--text3);padding:8px 0">Nenhum lançamento ainda.</div>';
 
-  document.getElementById('vales-cards').innerHTML =
-    '<div class="card inf"><div class="lbl">Total entradas</div><div class="val">'+totalEnt.toLocaleString('pt-BR')+'</div><div class="sub">vales recebidos de fornecedores</div></div>'+
-    '<div class="card ok"><div class="lbl">Total devolvido</div><div class="val">'+totalSai.toLocaleString('pt-BR')+'</div><div class="sub">paletes já pagos</div></div>'+
-    '<div class="card '+(saldoGeral>0?'bad':'')+'"><div class="lbl">Saldo a devolver</div><div class="val">'+saldoGeral.toLocaleString('pt-BR')+'</div><div class="sub">paletes que o CD ainda deve</div></div>'+
-    '<div class="card purple"><div class="lbl">Fornecedores</div><div class="val">'+valesFornecs.length+'</div><div class="sub">cadastrados neste módulo</div></div>'+
-    // card de breakdown por tipo — ocupa linha inteira abaixo
+  document.getElementById('vales-cards').innerHTML = cardsHtml +
     '<div style="grid-column:1/-1;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.2rem">'+
-      '<div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Saldo por tipo de palete</div>'+
+      '<div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Saldo por tipo de palete'+(filtForn?' — '+filtForn:'')+'</div>'+
       linhasBreakdown+
     '</div>';
 
