@@ -500,12 +500,16 @@ td.muted{color:var(--text2);font-size:12px}
 
 <!-- MODAL ENTRADA VALE -->
 <div class="overlay" id="modal-vale-entrada">
-<div class="modal">
+<div class="modal" style="width:560px">
   <h2>Entrada — Vale-Palete Recebido</h2>
-  <div class="section-tip">Fornecedor entregou mercadoria paletizada. Registre cada tipo de palete separadamente se necessário.</div>
+  <div class="section-tip">Fornecedor entregou mercadoria paletizada. Adicione quantos tipos de palete precisar no mesmo vale.</div>
   <div class="fr-2">
     <div class="fr"><label>Data *</label><input type="date" id="ve-data"></div>
-    <div class="fr"><label>Nº Vale / Controle *</label><input type="text" id="ve-vale" placeholder="Ex: VP-2026-001"></div>
+    <div class="fr">
+      <label>Nº Vale / Controle *</label>
+      <input type="text" id="ve-vale" placeholder="Ex: VP-2026-001" oninput="checarDuplicataVale(this.value,'ve-dup','ENTRADA')">
+      <div id="ve-dup" style="font-size:11px;margin-top:3px;min-height:14px"></div>
+    </div>
   </div>
   <div class="fr">
     <label>Fornecedor *</label>
@@ -514,20 +518,19 @@ td.muted{color:var(--text2);font-size:12px}
       <button class="btn btn-sm" onclick="abrirCadastroVForn()" title="Cadastrar novo fornecedor">+ Novo</button>
     </div>
   </div>
-  <div class="fr-2">
-    <div class="fr"><label>Tipo de palete *</label>
-      <select id="ve-item">
-        <option>PALETE PBR</option>
-        <option>PALETE DESCARTÁVEL</option>
-        <option>PALETE CHEP</option>
-        <option>PALETE EURO</option>
-        <option>PALETE EURO CHEP</option>
-        <option>CHAPATEX</option>
-      </select>
+
+  <!-- linhas de itens -->
+  <div style="margin-top:12px">
+    <div style="display:grid;grid-template-columns:1fr 110px 32px;gap:6px;align-items:center;margin-bottom:4px">
+      <span style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em">Tipo de palete</span>
+      <span style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em">Qtde</span>
+      <span></span>
     </div>
-    <div class="fr"><label>Quantidade *</label><input type="number" id="ve-qtde" min="1" placeholder="0"></div>
+    <div id="ve-linhas"></div>
+    <button class="btn btn-sm" style="margin-top:6px" onclick="addLinhaVale('ve-linhas')">+ Adicionar tipo</button>
   </div>
-  <div class="fr"><label>Observação</label><input type="text" id="ve-obs" placeholder="Opcional"></div>
+
+  <div class="fr" style="margin-top:10px"><label>Observação</label><input type="text" id="ve-obs" placeholder="Opcional"></div>
   <div class="msg" id="ve-msg"></div>
   <div class="mact">
     <button class="btn" onclick="fecharModal('vale-entrada')">Cancelar</button>
@@ -538,30 +541,33 @@ td.muted{color:var(--text2);font-size:12px}
 
 <!-- MODAL SAÍDA VALE -->
 <div class="overlay" id="modal-vale-saida">
-<div class="modal">
+<div class="modal" style="width:560px">
   <h2>Saída — Devolução de Paletes</h2>
-  <div class="section-tip">CD devolveu paletes a fornecedor. Abate do saldo devedor.</div>
+  <div class="section-tip">CD devolveu paletes ao fornecedor. Adicione quantos tipos de palete precisar.</div>
   <div class="fr-2">
     <div class="fr"><label>Data *</label><input type="date" id="vs-data"></div>
-    <div class="fr"><label>Nº Vale / Controle *</label><input type="text" id="vs-vale" placeholder="Ex: VP-DEV-001"></div>
+    <div class="fr">
+      <label>Nº Vale / Controle *</label>
+      <input type="text" id="vs-vale" placeholder="Ex: VP-DEV-001" oninput="checarDuplicataVale(this.value,'vs-dup','SAIDA')">
+      <div id="vs-dup" style="font-size:11px;margin-top:3px;min-height:14px"></div>
+    </div>
   </div>
   <div class="fr"><label>Fornecedor *</label>
     <select id="vs-forn" style="width:100%;font-size:13px;padding:7px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-family:inherit"><option value="">— Selecione —</option></select>
   </div>
-  <div class="fr-2">
-    <div class="fr"><label>Tipo de palete *</label>
-      <select id="vs-item">
-        <option>PALETE PBR</option>
-        <option>PALETE DESCARTÁVEL</option>
-        <option>PALETE CHEP</option>
-        <option>PALETE EURO</option>
-        <option>PALETE EURO CHEP</option>
-        <option>CHAPATEX</option>
-      </select>
+
+  <!-- linhas de itens -->
+  <div style="margin-top:12px">
+    <div style="display:grid;grid-template-columns:1fr 110px 32px;gap:6px;align-items:center;margin-bottom:4px">
+      <span style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em">Tipo de palete</span>
+      <span style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em">Qtde</span>
+      <span></span>
     </div>
-    <div class="fr"><label>Quantidade *</label><input type="number" id="vs-qtde" min="1" placeholder="0"></div>
+    <div id="vs-linhas"></div>
+    <button class="btn btn-sm" style="margin-top:6px" onclick="addLinhaVale('vs-linhas')">+ Adicionar tipo</button>
   </div>
-  <div class="fr"><label>Observação</label><input type="text" id="vs-obs" placeholder="Opcional"></div>
+
+  <div class="fr" style="margin-top:10px"><label>Observação</label><input type="text" id="vs-obs" placeholder="Opcional"></div>
   <div class="msg" id="vs-msg"></div>
   <div class="mact">
     <button class="btn" onclick="fecharModal('vale-saida')">Cancelar</button>
@@ -1735,24 +1741,93 @@ function calcSaldos(){
   return saldos;
 }
 
+// ---- helper: linha de item no modal multi-palete ----
+var OPCOES_PALETE = ['PALETE PBR','PALETE DESCARTÁVEL','PALETE CHEP','PALETE EURO','PALETE EURO CHEP','CHAPATEX'];
+
+function addLinhaVale(containerId){
+  var c = document.getElementById(containerId);
+  var div = document.createElement('div');
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 110px 32px;gap:6px;align-items:center;margin-bottom:6px';
+  div.innerHTML =
+    '<select style="font-size:13px;padding:6px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-family:inherit">'+
+    OPCOES_PALETE.map(function(o){return'<option>'+o+'</option>';}).join('')+
+    '</select>'+
+    '<input type="number" min="1" placeholder="0" style="font-size:13px;padding:6px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);text-align:right;font-family:inherit;background:var(--surface);color:var(--text)">'+
+    '<button onclick="this.parentElement.remove()" style="width:28px;height:28px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);cursor:pointer;font-size:14px;color:var(--danger);display:flex;align-items:center;justify-content:center">×</button>';
+  c.appendChild(div);
+}
+
+function getLinhasVale(containerId){
+  var c = document.getElementById(containerId);
+  var rows = c.querySelectorAll('div');
+  var result = [];
+  rows.forEach(function(row){
+    var sel = row.querySelector('select');
+    var inp = row.querySelector('input');
+    if(!sel||!inp) return;
+    var q = parseInt(inp.value)||0;
+    if(q>0) result.push({item:sel.value, qtde:q});
+  });
+  return result;
+}
+
+// ---- aviso de vale duplicado ----
+function checarDuplicataVale(val, divId, tipo){
+  var el = document.getElementById(divId);
+  if(!el) return;
+  var v = val.trim().toUpperCase();
+  if(!v){el.innerHTML='';return;}
+  var achou = valesLanc.filter(function(r){return r.vale && r.vale.toUpperCase()===v;});
+  if(achou.length===0){el.innerHTML='';return;}
+  var fornAchou = [...new Set(achou.map(function(r){return r.forn;}))].join(', ');
+  el.innerHTML = '<span style="color:var(--warn);font-weight:600">⚠ Vale já lançado para: '+fornAchou+' — verifique antes de salvar.</span>';
+}
+
 // ---- renderiza a página de Vales ----
 function rVales(){
   var filtForn = document.getElementById('vf-forn').value;
   var filtItem = document.getElementById('vf-item').value;
   var filtTipo = document.getElementById('vf-tipo').value;
 
-  // --- cards de totais ---
+  // --- cards: totais gerais + breakdown por tipo ---
+  var porItem = {}; // {item: {ent:0, sai:0}}
   var totalEnt = 0, totalSai = 0;
+  ITENS_VALES.forEach(function(it){porItem[it]={ent:0,sai:0};});
   valesLanc.forEach(function(r){
-    if(r.tipo==='ENTRADA') totalEnt += r.qtde;
-    else totalSai += r.qtde;
+    if(!porItem[r.item]) porItem[r.item]={ent:0,sai:0};
+    if(r.tipo==='ENTRADA'){ porItem[r.item].ent+=r.qtde; totalEnt+=r.qtde; }
+    else { porItem[r.item].sai+=r.qtde; totalSai+=r.qtde; }
   });
   var saldoGeral = totalEnt - totalSai;
+
+  // card resumo + card breakdown
+  var linhasBreakdown = ITENS_VALES.map(function(it){
+    var s = (porItem[it]||{ent:0,sai:0});
+    var sld = s.ent - s.sai;
+    if(s.ent===0 && s.sai===0) return '';
+    var cor = sld>0 ? 'var(--danger)' : sld<0 ? 'var(--warn)' : 'var(--success)';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:12px">'+
+      '<span style="color:var(--text2)">'+it+'</span>'+
+      '<span style="display:flex;gap:16px">'+
+        '<span style="color:var(--text3)">Ent: <strong style="color:var(--text)">'+s.ent+'</strong></span>'+
+        '<span style="color:var(--text3)">Sai: <strong style="color:var(--text)">'+s.sai+'</strong></span>'+
+        '<span style="min-width:48px;text-align:right;font-weight:700;color:'+cor+'">'+sld+'</span>'+
+      '</span>'+
+    '</div>';
+  }).filter(Boolean).join('');
+
+  if(!linhasBreakdown) linhasBreakdown = '<div style="font-size:12px;color:var(--text3);padding:8px 0">Nenhum lançamento ainda.</div>';
+
   document.getElementById('vales-cards').innerHTML =
     '<div class="card inf"><div class="lbl">Total entradas</div><div class="val">'+totalEnt.toLocaleString('pt-BR')+'</div><div class="sub">vales recebidos de fornecedores</div></div>'+
     '<div class="card ok"><div class="lbl">Total devolvido</div><div class="val">'+totalSai.toLocaleString('pt-BR')+'</div><div class="sub">paletes já pagos</div></div>'+
     '<div class="card '+(saldoGeral>0?'bad':'')+'"><div class="lbl">Saldo a devolver</div><div class="val">'+saldoGeral.toLocaleString('pt-BR')+'</div><div class="sub">paletes que o CD ainda deve</div></div>'+
-    '<div class="card purple"><div class="lbl">Fornecedores</div><div class="val">'+valesFornecs.length+'</div><div class="sub">cadastrados neste módulo</div></div>';
+    '<div class="card purple"><div class="lbl">Fornecedores</div><div class="val">'+valesFornecs.length+'</div><div class="sub">cadastrados neste módulo</div></div>'+
+    // card de breakdown por tipo — ocupa linha inteira abaixo
+    '<div style="grid-column:1/-1;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.2rem">'+
+      '<div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Saldo por tipo de palete</div>'+
+      linhasBreakdown+
+    '</div>';
 
   // --- tabela de saldos por fornecedor ---
   var saldos = calcSaldos();
@@ -1829,18 +1904,22 @@ function abrirModalValeEntrada(){
   document.getElementById('ve-data').valueAsDate = new Date();
   document.getElementById('ve-vale').value='';
   document.getElementById('ve-forn').value='';
-  document.getElementById('ve-qtde').value='';
   document.getElementById('ve-obs').value='';
   document.getElementById('ve-msg').textContent='';
+  document.getElementById('ve-dup').innerHTML='';
+  var c=document.getElementById('ve-linhas'); c.innerHTML='';
+  addLinhaVale('ve-linhas');
   document.getElementById('modal-vale-entrada').classList.add('on');
 }
 function abrirModalValeSaida(){
   document.getElementById('vs-data').valueAsDate = new Date();
   document.getElementById('vs-vale').value='';
   document.getElementById('vs-forn').value='';
-  document.getElementById('vs-qtde').value='';
   document.getElementById('vs-obs').value='';
   document.getElementById('vs-msg').textContent='';
+  document.getElementById('vs-dup').innerHTML='';
+  var c=document.getElementById('vs-linhas'); c.innerHTML='';
+  addLinhaVale('vs-linhas');
   document.getElementById('modal-vale-saida').classList.add('on');
 }
 function abrirCadastroVForn(){
@@ -1885,18 +1964,23 @@ async function salvarValeEntrada(){
   var dt   = document.getElementById('ve-data').value;
   var vale = document.getElementById('ve-vale').value.trim();
   var forn = document.getElementById('ve-forn').value;
-  var item = document.getElementById('ve-item').value;
-  var qtde = parseInt(document.getElementById('ve-qtde').value)||0;
   var obs  = document.getElementById('ve-obs').value.trim();
   var msg  = document.getElementById('ve-msg');
-  if(!dt||!vale||!forn||qtde<=0){msg.className='msg err';msg.textContent='Preencha data, nº vale, fornecedor e quantidade.';return;}
+  var linhas = getLinhasVale('ve-linhas');
+  if(!dt||!vale||!forn){msg.className='msg err';msg.textContent='Preencha data, nº vale e fornecedor.';return;}
+  if(linhas.length===0){msg.className='msg err';msg.textContent='Adicione ao menos um tipo de palete com quantidade maior que zero.';return;}
   var p=dt.split('-');
-  var reg={data:p[2]+'/'+p[1]+'/'+p[0],vale:vale,forn:forn,item:item,qtde:qtde,tipo:'ENTRADA',obs:obs,ts:Date.now()};
+  var dataFmt=p[2]+'/'+p[1]+'/'+p[0];
   try {
-    var key = db.ref('vales_forn/lancamentos').push().key;
-    await db.ref('vales_forn/lancamentos/'+key).set(reg);
-    reg._id=key; valesLanc.push(reg);
-    msg.className='msg ok';msg.textContent='Entrada registrada!';
+    var updates={};
+    linhas.forEach(function(l){
+      var key=db.ref('vales_forn/lancamentos').push().key;
+      var reg={data:dataFmt,vale:vale,forn:forn,item:l.item,qtde:l.qtde,tipo:'ENTRADA',obs:obs,ts:Date.now()};
+      updates[key]=reg;
+      var r=Object.assign({},reg); r._id=key; valesLanc.push(r);
+    });
+    await db.ref('vales_forn/lancamentos').update(updates);
+    msg.className='msg ok';msg.textContent=linhas.length+' item(ns) registrado(s)!';
     setTimeout(function(){fecharModal('vale-entrada');rVales();},900);
   } catch(e){msg.className='msg err';msg.textContent='Erro: '+e.message;}
 }
@@ -1906,18 +1990,23 @@ async function salvarValeSaida(){
   var dt   = document.getElementById('vs-data').value;
   var vale = document.getElementById('vs-vale').value.trim();
   var forn = document.getElementById('vs-forn').value;
-  var item = document.getElementById('vs-item').value;
-  var qtde = parseInt(document.getElementById('vs-qtde').value)||0;
   var obs  = document.getElementById('vs-obs').value.trim();
   var msg  = document.getElementById('vs-msg');
-  if(!dt||!vale||!forn||qtde<=0){msg.className='msg err';msg.textContent='Preencha data, nº vale, fornecedor e quantidade.';return;}
+  var linhas = getLinhasVale('vs-linhas');
+  if(!dt||!vale||!forn){msg.className='msg err';msg.textContent='Preencha data, nº vale e fornecedor.';return;}
+  if(linhas.length===0){msg.className='msg err';msg.textContent='Adicione ao menos um tipo de palete com quantidade maior que zero.';return;}
   var p=dt.split('-');
-  var reg={data:p[2]+'/'+p[1]+'/'+p[0],vale:vale,forn:forn,item:item,qtde:qtde,tipo:'SAIDA',obs:obs,ts:Date.now()};
+  var dataFmt=p[2]+'/'+p[1]+'/'+p[0];
   try {
-    var key = db.ref('vales_forn/lancamentos').push().key;
-    await db.ref('vales_forn/lancamentos/'+key).set(reg);
-    reg._id=key; valesLanc.push(reg);
-    msg.className='msg ok';msg.textContent='Saída registrada!';
+    var updates={};
+    linhas.forEach(function(l){
+      var key=db.ref('vales_forn/lancamentos').push().key;
+      var reg={data:dataFmt,vale:vale,forn:forn,item:l.item,qtde:l.qtde,tipo:'SAIDA',obs:obs,ts:Date.now()};
+      updates[key]=reg;
+      var r=Object.assign({},reg); r._id=key; valesLanc.push(r);
+    });
+    await db.ref('vales_forn/lancamentos').update(updates);
+    msg.className='msg ok';msg.textContent=linhas.length+' item(ns) registrado(s)!';
     setTimeout(function(){fecharModal('vale-saida');rVales();},900);
   } catch(e){msg.className='msg err';msg.textContent='Erro: '+e.message;}
 }
