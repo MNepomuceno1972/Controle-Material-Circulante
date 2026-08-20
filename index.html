@@ -319,7 +319,10 @@ td.muted{color:var(--text2);font-size:12px}
 <div class="page" id="p-mov">
   <div class="ph">
     <div><h2>Movimentações</h2><p>Expedições, recebimentos e retornos • ordem decrescente por data</p></div>
-    <button class="btn btn-p btn-sm" onclick="ir(&#39;lanc&#39;)">+ Novo lançamento</button>
+    <div class="btn-group">
+      <button class="btn btn-s btn-sm" onclick="exportarMov()">⬇ Exportar período</button>
+      <button class="btn btn-p btn-sm" onclick="ir(&#39;lanc&#39;)">+ Novo lançamento</button>
+    </div>
   </div>
   <div class="filters">
     <div class="fg"><label>Data início</label><input type="date" id="md1" onchange="rMov()"></div>
@@ -1632,7 +1635,7 @@ function rDash(){
     if(!bm[k])bm[k]={};
     bm[k][r.item]=(bm[k][r.item]||0)+r.qtde;
   });
-  var ms=Object.keys(bm).sort().reverse();
+  var ms=Object.keys(bm).sort();
   var modUsados = MODELOS.filter(function(m){
     return ms.some(function(k){return (bm[k][m]||0)>0;});
   });
@@ -1669,17 +1672,42 @@ function rDash(){
 // =========================================================
 // MOVIMENTAÇÕES — ordem DESC por data (mês atual → mês mais antigo)
 // =========================================================
-function rMov(){
+function dadosMov(){
   var d1=getD1('md1'),d2=getD2('md2'),fr=document.getElementById('mf').value;
   var it=document.getElementById('mi').value,tp=document.getElementById('mt').value;
   var data=filtrar(d1,d2,fr);
   if(it)data=data.filter(function(r){return r.item===it;});
   if(tp)data=data.filter(function(r){return r.nat===tp;});
+  return sortDesc(data);
+}
 
-  // Ordenação DESC — julho para janeiro
-  data = sortDesc(data);
+// Exporta o período filtrado em CSV (Excel pt-BR)
+function exportarMov(){
+  var data=dadosMov();
+  if(!data.length){alert('Nenhum registro no período selecionado.');return;}
+  var v1=document.getElementById('md1').value, v2=document.getElementById('md2').value;
+  function esc(s){s=(s===undefined||s===null||s==='')?'':String(s);return '"'+s.replace(/"/g,'""')+'";';}
+  var linhas=['Data;Fornecedor;Item;Natureza;Quantidade;Viagem/Placa;Recibo;Romaneio;Conferente'];
+  data.forEach(function(r){
+    linhas.push([
+      esc(r.data),esc(r.forn),esc(r.item),esc(r.nat),
+      String(r.qtde)+';',
+      esc(r.vp),esc(r.recibo),esc(r.rom),esc(r.conf)
+    ].join('').replace(/;$/,''));
+  });
+  var csv='\ufeff'+linhas.join('\r\n');
+  var nome='movimentacoes_'+(v1||'inicio')+'_a_'+(v2||'hoje')+'.csv';
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download=nome;document.body.appendChild(a);a.click();
+  document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url);},1500);
+}
 
-  document.getElementById('mov-info').textContent=data.length+' registros encontrados (ordem decrescente)';
+function rMov(){
+  var data=dadosMov();
+
+  document.getElementById('mov-info').textContent=data.length+' registros encontrados (ordem decrescente) • exibindo '+Math.min(data.length,500);
   document.getElementById('mov-body').innerHTML=data.slice(0,500).map(function(r){
     var bcls=r.nat==='EXPEDIÇÃO'?'b-exp':r.nat==='RECEBIMENTO'?'b-rec':r.nat==='RETORNO'?'b-ret':'b-comp';
     var blbl=r.nat==='EXPEDIÇÃO'?'Expedição':r.nat==='RECEBIMENTO'?'Recebimento':r.nat==='RETORNO'?'Retorno':'Compra';
