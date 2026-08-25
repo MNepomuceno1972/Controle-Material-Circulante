@@ -418,6 +418,7 @@ td.muted{color:var(--text2);font-size:12px}
     <div class="fg"><label>Data início</label><input type="date" id="cd1" onchange="rCompras()"></div>
     <div class="fg"><label>Data fim</label><input type="date" id="cd2" onchange="rCompras()"></div>
     <div class="fg"><label>Fornecedor</label><select id="cf2" onchange="rCompras()"><option value="">Todos</option><option>DANILO</option><option>STECK</option></select></div>
+    <div class="fg"><label>Tipo</label><select id="ct" onchange="rCompras()"><option value="">Todos</option><option value="COMPRA">Compra</option><option value="REFORMA">Reforma</option></select></div>
   </div>
   <div class="cards" id="comp-cards"><div class="card inf"><div class="lbl">Total comprado</div><div class="val">7.112</div><div class="sub">unidades</div></div><div class="card warn"><div class="lbl">Valor total</div><div class="val" style="font-size:18px">R$ 161.554,40</div><div class="sub">período selecionado</div></div></div>
   <div class="tw">
@@ -1771,7 +1772,9 @@ async function salvarLanc(){
 // =========================================================
 function rCompras(){
   var d1=getD1('cd1'),d2=getD2('cd2'),fr=document.getElementById('cf2').value;
+  var tp=document.getElementById('ct').value;
   var data=sortDesc(filtrar(d1,d2,fr,compras));
+  if(tp) data=data.filter(function(r){return (r.tipo||'COMPRA')===tp;});
   var total=data.reduce(function(s,r){return s+(r.qtde*r.vunit);},0);
   var qtotal=data.reduce(function(s,r){return s+r.qtde;},0);
   document.getElementById('comp-cards').innerHTML=
